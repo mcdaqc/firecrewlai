@@ -8,15 +8,18 @@ def setup_project_structure():
     
     # Define project structure
     directories = [
-        'generated/web_apps',      # For generated web applications
-        'generated/apis',          # For generated APIs
-        'generated/crawlers',      # For generated web crawlers
-        'generated/tests',         # For generated tests
-        'data/cache',             # For temporary data
-        'data/logs',              # For system logs
-        'examples/templates',      # Code templates
-        'examples/generated_app',  # Example applications
-        'config'                  # Configuration files
+        'agents',                    # Agent modules
+        'config',                    # Configuration files
+        'data/cache',               # Cache directory
+        'data/logs',                # Log files
+        'examples/templates',        # Code templates
+        'examples/docker',          # Docker configurations
+        'generated/web_apps',       # Generated web applications
+        'generated/apis',           # Generated APIs
+        'generated/crawlers',       # Generated web crawlers
+        'generated/tests',          # Generated tests
+        'tests',                    # Project tests
+        'utils'                     # Utility modules
     ]
     
     # Create directories

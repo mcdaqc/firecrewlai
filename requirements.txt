@@ -1,35 +1,45 @@
 # Core dependencies
-python-dotenv>=0.19.0
-pydantic>=2.0.0
+python-dotenv==0.19.0
+pydantic==1.10.9
+docker==6.1.0
+requests==2.31.0
+
+# PyTorch (esencial para NeMo)
+torch==2.0.0
+torchvision==0.15.0
+torchaudio==2.0.0
+
+# NeMo Stack
+#nvidia-nemo==1.20.0
+pytorch-lightning==2.0.0
 
 # RAG Stack
-langchain>=0.1.0
-chromadb>=0.4.0
-sentence-transformers>=2.2.0
-faiss-cpu>=1.7.4
-tiktoken>=0.5.1
+langchain==0.1.0
+chromadb==0.4.0
+sentence-transformers==2.2.0
+faiss-cpu==1.7.4
+tiktoken==0.5.1
 
 # Agent system dependencies
-nvidia-nemo>=1.20.0
-docker>=6.1.0
-pytest>=7.0.0
-beautifulsoup4>=4.9.3
-requests>=2.31.0
+pytest==7.0.0
+beautifulsoup4==4.9.3
 
 # Web framework options
-flask>=2.0.0
-django>=4.2.0
-fastapi>=0.100.0
+flask==2.0.0
+django==4.2.0
+fastapi==0.95.2
 
 # Security and validation
-bandit>=1.7.0
-safety>=2.3.0
-pylint>=2.17.0
+bandit==1.7.0
+safety==2.3.0
+pylint==2.17.0
 
 # Database and storage
-astrapy>=0.7.0
-milvus>=2.3.0
+astrapy==0.7.0
+#milvus==2.3.0
 
 # Utilities
-python-multipart>=0.0.6
-python-jose[cryptography]>=3.3.0 
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0 
+
+# pip install -U langchain-community

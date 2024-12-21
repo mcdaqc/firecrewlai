@@ -2,10 +2,10 @@ from typing import Dict, Optional
 import docker
 import tempfile
 import os
-from .generator_agent import CodeGenerator
-from .coordinator_agent import TaskCoordinator
-from ..utils.rag_manager import RAGManager
-from ..utils.security import SecurityManager
+from utils.rag_manager import RAGManager
+from utils.security import SecurityManager
+from agents.generator_agent import CodeGenerator
+from agents.coordinator_agent import TaskCoordinator
 
 class CodeValidator:
     """Validates generated code through testing and security checks."""
@@ -62,21 +62,24 @@ class CodeValidator:
     def _attempt_code_fix(self, code_package: Dict, validation_results: Dict) -> Optional[Dict]:
         """Attempt to fix invalid code by regenerating with error context."""
         try:
+            # Get RAG context for similar issues
+            rag_context = self.rag_manager.get_relevant_context(
+                f"fix {' '.join(validation_results['errors'])}"
+            )
+            
             # Prepare error context for regeneration
             error_context = {
                 'original_code': code_package,
                 'validation_errors': validation_results['errors'],
-                'security_issues': validation_results['security_issues']
+                'security_issues': validation_results['security_issues'],
+                'rag_suggestions': rag_context
             }
             
             # Request code regeneration through coordinator
-            self.task_coordinator.reassign_task(self.code_generator, error_context)
-            
-            # Return None if unable to fix
-            return None
+            return self.task_coordinator.reassign_task(self.code_generator, error_context)
             
         except Exception as e:
-            print(f"Error attempting to fix code: {str(e)}")
+            self.logger.error(f"Error attempting to fix code: {str(e)}")
             return None
 
     def _validate_syntax(self, code: str, results: Dict) -> None:

@@ -2,6 +2,9 @@ from typing import Dict
 import requests
 from bs4 import BeautifulSoup
 import logging
+import os
+from pathlib import Path
+from datetime import datetime
 
 class FirecrawlWrapper:
     """Wrapper for Firecrawl web scraping functionality."""
@@ -11,7 +14,7 @@ class FirecrawlWrapper:
         
     def scrape_data(self, requirements: Dict) -> Dict:
         """
-        Scrape relevant data based on requirements.
+        Scrape relevant data based on requirements using Firecrawl.
         
         Args:
             requirements: Dict containing user requirements
@@ -23,15 +26,25 @@ class FirecrawlWrapper:
             # Extract search terms from requirements
             search_terms = self._extract_search_terms(requirements)
             
+            # Initialize Firecrawl client
+            firecrawl_client = FirecrawlClient(
+                api_key=os.getenv('FIRECRAWL_API_KEY'),
+                cache_dir=Path('data/cache/firecrawl')
+            )
+            
             # Collect data from various sources
             scraped_data = {
-                'examples': self._scrape_code_examples(search_terms),
-                'documentation': self._scrape_documentation(search_terms),
+                'examples': firecrawl_client.search_code_examples(search_terms),
+                'documentation': firecrawl_client.search_documentation(search_terms),
+                'libraries': firecrawl_client.search_libraries(search_terms),
                 'metadata': {
-                    'sources': ['github', 'readthedocs', 'stackoverflow'],
-                    'timestamp': None  # Would use actual timestamp
+                    'sources': firecrawl_client.get_sources(),
+                    'timestamp': datetime.now().isoformat()
                 }
             }
+            
+            # Store in RAG system
+            self._store_in_rag(scraped_data)
             
             return scraped_data
             

@@ -1,7 +1,7 @@
 from astrapy.db import AstraDB
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader
 from pathlib import Path
 import os
 from typing import List, Dict
