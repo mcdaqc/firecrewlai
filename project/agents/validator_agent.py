@@ -1,23 +1,33 @@
-from typing import Dict
+from typing import Dict, Optional
 import docker
 import tempfile
 import os
+from .generator_agent import CodeGenerator
+from .coordinator_agent import TaskCoordinator
+from ..utils.rag_manager import RAGManager
+from ..utils.security import SecurityManager
 
 class CodeValidator:
     """Validates generated code through testing and security checks."""
     
     def __init__(self):
         self.docker_client = docker.from_env()
-    
+        self.code_generator = CodeGenerator()
+        self.task_coordinator = TaskCoordinator()
+        self.rag_manager = RAGManager()
+        self.security_manager = SecurityManager()
+        
+        # Define paths for code execution and Docker
+        self.base_path = os.path.join(os.getcwd(), 'project', 'generated')
+        self.docker_path = os.path.join(self.base_path, 'docker')
+        
+        # Ensure Docker directory exists
+        os.makedirs(self.docker_path, exist_ok=True)
+
     def validate_code(self, code_package: Dict) -> Dict:
         """
         Validates the generated code through multiple checks.
-        
-        Args:
-            code_package: Dict containing code and metadata
-            
-        Returns:
-            Dict with validation results
+        Uses RAG for context-aware validation.
         """
         try:
             results = {
@@ -27,11 +37,17 @@ class CodeValidator:
                 'performance_metrics': {}
             }
             
-            # Run various validation checks
+            # Run validation checks with RAG context
             self._validate_syntax(code_package['code'], results)
             self._run_security_checks(code_package, results)
             self._test_in_container(code_package, results)
             self._check_dependencies(code_package['dependencies'], results)
+            
+            # If validation failed, attempt to fix with RAG context
+            if not results['valid']:
+                fixed_code = self._attempt_code_fix(code_package, results)
+                if fixed_code:
+                    return self.validate_code(fixed_code)
             
             return results
             
@@ -43,38 +59,56 @@ class CodeValidator:
                 'performance_metrics': {}
             }
 
+    def _attempt_code_fix(self, code_package: Dict, validation_results: Dict) -> Optional[Dict]:
+        """Attempt to fix invalid code by regenerating with error context."""
+        try:
+            # Prepare error context for regeneration
+            error_context = {
+                'original_code': code_package,
+                'validation_errors': validation_results['errors'],
+                'security_issues': validation_results['security_issues']
+            }
+            
+            # Request code regeneration through coordinator
+            self.task_coordinator.reassign_task(self.code_generator, error_context)
+            
+            # Return None if unable to fix
+            return None
+            
+        except Exception as e:
+            print(f"Error attempting to fix code: {str(e)}")
+            return None
+
     def _validate_syntax(self, code: str, results: Dict) -> None:
-        """Validate Python syntax."""
+        """Validate Python syntax with RAG context."""
         try:
             compile(code, '<string>', 'exec')
+            
+            # Get RAG validation context
+            rag_validation = self.rag_manager.validate_with_context(code)
+            
+            # Add RAG-based suggestions
+            if rag_validation['suggestions']:
+                results['rag_suggestions'] = rag_validation['suggestions']
+                
         except SyntaxError as e:
             results['valid'] = False
             results['errors'].append(f"Syntax error: {str(e)}")
 
     def _run_security_checks(self, code_package: Dict, results: Dict) -> None:
-        """Run basic security checks on the code."""
-        security_patterns = [
-            'eval(',
-            'exec(',
-            'os.system(',
-            'subprocess.call('
-        ]
-        
-        code = code_package['code']
-        for pattern in security_patterns:
-            if pattern in code:
-                results['security_issues'].append(
-                    f"Potentially unsafe function used: {pattern}"
-                )
+        """Run security checks using SecurityManager."""
+        security_results = self.security_manager.run_security_scan(code_package)
+        results['security_issues'].extend(security_results['vulnerabilities'])
+        results['security_score'] = security_results['security_score']
 
     def _test_in_container(self, code_package: Dict, results: Dict) -> None:
         """Run code in isolated Docker container."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Create test environment
-            self._setup_test_environment(tmpdir, code_package)
-            
             try:
-                # Build and run container
+                # Create test environment
+                self._setup_test_environment(tmpdir, code_package)
+                
+                # Run tests in container
                 self.docker_client.containers.run(
                     'python:3.9-slim',
                     command=['python', '-m', 'pytest'],

@@ -5,14 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.base
-      args:
-        - BUILD_ENV=${BUILD_ENV:-production}
     volumes:
-      - ../../generated_code:/app/code:ro
-      - app_data:/app/data
+      - ../../data:/app/data
     environment:
-      - ENV_FILE=/app/code/.env
-      - PYTHONPATH=/app/code
+      - ASTRA_DB_ID=${ASTRA_DB_ID}
+      - ASTRA_DB_REGION=${ASTRA_DB_REGION}
+      - ASTRA_DB_TOKEN=${ASTRA_DB_TOKEN}
+      - NEMO_API_KEY=${NEMO_API_KEY}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8000}/health"]
       interval: 30s

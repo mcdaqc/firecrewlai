@@ -4,19 +4,28 @@ from agents.validator_agent import CodeValidator
 from agents.coordinator_agent import TaskCoordinator
 from utils.firecrawl_wrapper import FirecrawlWrapper
 from utils.nemo_utils import NeMoUtils
+from utils.security import SecurityManager
+from utils.rag_manager import RAGManager
+from utils.logger import LogManager
+from pathlib import Path
 
 def main():
-    # Initialize the agents
-    collector = RequirementCollector()
-    generator = CodeGenerator()
-    validator = CodeValidator()
-    coordinator = TaskCoordinator()
-
-    # Initialize utilities
-    firecrawl = FirecrawlWrapper()
-    nemo_utils = NeMoUtils()
-
+    # Initialize logging
+    logger = LogManager(Path("data/logs")).get_logger(__name__)
+    
     try:
+        # Initialize components
+        collector = RequirementCollector()
+        generator = CodeGenerator()
+        validator = CodeValidator()
+        coordinator = TaskCoordinator()
+        rag_manager = RAGManager()
+        security_manager = SecurityManager()
+        
+        # Initialize utilities
+        firecrawl = FirecrawlWrapper()
+        nemo_utils = NeMoUtils()
+
         # Step 1: Collect Requirements
         user_requirements = collector.collect_requirements()
 
@@ -39,7 +48,7 @@ def main():
             coordinator.provide_feedback(generated_code)
 
     except Exception as e:
-        print(f"Error in main execution: {str(e)}")
+        logger.error(f"Error in main execution: {str(e)}")
         raise
 
 if __name__ == "__main__":

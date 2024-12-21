@@ -1,17 +1,22 @@
-FROM project-base:latest
+FROM python:3.9-slim
 
-# Switch back to root for test setup
-USER root
+WORKDIR /app
 
-# Install test dependencies
-COPY requirements-test.txt .
-RUN pip install --no-cache-dir -r requirements-test.txt
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy test files
-COPY tests/ /app/tests/
+COPY ./tests /app/tests
 
-# Switch back to appuser
-USER appuser
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
-# Command to run tests
-CMD ["pytest", "-v"] 
+# Run tests
+CMD ["pytest", "-v", "/app/tests"] 

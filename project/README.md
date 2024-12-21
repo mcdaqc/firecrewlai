@@ -1,6 +1,6 @@
 # Multi-Agent System with NVIDIA NeMo and Firecrawl
 
-A sophisticated multi-agent system capable of developing functional applications using NVIDIA NeMo and Firecrawl. The system employs multiple specialized agents to handle different aspects of application development, from requirement gathering to code generation and testing.
+A multi-agent system capable of developing functional applications using NVIDIA NeMo and Firecrawl. The system employs multiple specialized agents to handle different aspects of application development, from requirement gathering to code generation and testing.
 
 ## Features
 
@@ -18,8 +18,4 @@ A sophisticated multi-agent system capable of developing functional applications
 - Docker and Docker Compose
 - NVIDIA GPU (optional, for enhanced performance)
 - AstraDB account
-- NVIDIA NeMo API key
-
-## Installation
-
-1. Clone the repository: 
+- NVIDIA API key

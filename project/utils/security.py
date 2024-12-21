@@ -1,8 +1,12 @@
-from typing import Dict
+from typing import Dict, List
 import docker
 import os
 import subprocess
 from pathlib import Path
+import tempfile
+import json
+import bandit
+from safety.safety import check as safety_check
 
 class SecurityManager:
     """Manages security aspects of code execution and validation."""
@@ -22,19 +26,59 @@ class SecurityManager:
         return env_path
         
     def run_security_scan(self, code_package: Dict) -> Dict:
-        """Run security scan on the code."""
+        """Run comprehensive security scan."""
         results = {
             'vulnerabilities': [],
-            'security_score': 1.0
+            'security_score': 1.0,
+            'dependency_issues': [],
+            'code_issues': []
         }
         
-        # Run various security checks
+        # Run security checks
         self._check_dependencies(code_package, results)
-        self._scan_for_vulnerabilities(code_package, results)
-        self._check_permissions(code_package, results)
+        self._run_bandit_scan(code_package['code'], results)
+        self._check_docker_security(results)
         
         return results
+    
+    def _run_bandit_scan(self, code: str, results: Dict) -> None:
+        """Run Bandit security scanner on code."""
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.py') as temp_file:
+                temp_file.write(code)
+                temp_file.flush()
+                
+                # Run Bandit scan
+                cmd = f"bandit -r {temp_file.name} -f json"
+                output = subprocess.check_output(cmd, shell=True)
+                scan_results = json.loads(output)
+                
+                # Process results
+                for issue in scan_results['results']:
+                    results['code_issues'].append({
+                        'severity': issue['issue_severity'],
+                        'confidence': issue['issue_confidence'],
+                        'description': issue['issue_text']
+                    })
+        except Exception as e:
+            results['vulnerabilities'].append(f"Bandit scan failed: {str(e)}")
+    
+    def _check_docker_security(self, results: Dict) -> None:
+        """Check Docker configuration security."""
+        security_checks = [
+            ('User directive', self._check_docker_user),
+            ('Resource limits', self._check_resource_limits),
+            ('Security options', self._check_security_opts)
+        ]
         
+        for check_name, check_func in security_checks:
+            try:
+                check_func(results)
+            except Exception as e:
+                results['vulnerabilities'].append(
+                    f"Docker security check '{check_name}' failed: {str(e)}"
+                )
+    
     def _setup_environment(self, env_path: Path, code_package: Dict) -> None:
         """Set up secure environment with necessary restrictions."""
         # Create necessary files
