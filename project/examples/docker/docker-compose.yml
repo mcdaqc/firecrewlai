@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.base
+      args:
+        - BUILD_ENV=${BUILD_ENV:-production}
+    volumes:
+      - ../../generated_code:/app/code:ro
+      - app_data:/app/data
+    environment:
+      - ENV_FILE=/app/code/.env
+      - PYTHONPATH=/app/code
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - agent-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      - ../../generated_code:/app/code:ro
+      - ../../tests:/app/tests:ro
+    environment:
+      - PYTHONPATH=/app/code:/app/tests
+      - TEST_ENV=true
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - agent-network
+
+  security-scan:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    command: ["bandit", "-r", "/app/code", "-f", "json", "-o", "/app/data/security-report.json"]
+    volumes:
+      - ../../generated_code:/app/code:ro
+      - security_data:/app/data
+    networks:
+      - agent-network
+
+volumes:
+  app_data:
+  security_data:
+
+networks:
+  agent-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16 

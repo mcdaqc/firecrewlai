@@ -1,0 +1,17 @@
+FROM project-base:latest
+
+# Switch back to root for test setup
+USER root
+
+# Install test dependencies
+COPY requirements-test.txt .
+RUN pip install --no-cache-dir -r requirements-test.txt
+
+# Copy test files
+COPY tests/ /app/tests/
+
+# Switch back to appuser
+USER appuser
+
+# Command to run tests
+CMD ["pytest", "-v"] 
