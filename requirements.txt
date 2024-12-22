@@ -4,13 +4,10 @@ pydantic==1.10.9
 docker==6.1.0
 requests==2.31.0
 
-# PyTorch (esencial para NeMo)
+# PyTorch
 torch==2.0.0
-torchvision==0.15.0
-torchaudio==2.0.0
 
 # NeMo Stack
-#nvidia-nemo==1.20.0
 pytorch-lightning==2.0.0
 
 # RAG Stack
